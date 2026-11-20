@@ -12,114 +12,67 @@
   <img src="https://img.shields.io/badge/OS-Ubuntu%2024.04%20LTS-E95420?style=flat-square&logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 LTS" />
 </p>
 
----
 
 <a id="english-version"></a>
 ## English Version
 
 ### 1. Project Overview
+This project presents a redesigned enterprise wireless network architecture for **TLSW Corporation** (~40 staff, 35 workstations), migrating from an outdated flat-wired Windows infrastructure to a segmented, Linux-based (`Ubuntu 24.04 LTS`) wireless topology simulated in **Cisco Packet Tracer**. The design enforces strict departmental isolation via **5 VLANs**, **`/27` CIDR subnetting**, **Router-on-a-Stick** inter-VLAN routing, **Cisco IOS Extended ACLs**, and **NIST SP 800-114 Rev. 1** BYOD security governance.
 
-This project presents a secure, cost-effective wireless network redesign and Cisco Packet Tracer simulation for **TLSW Corporation**, a mid-sized financial consulting firm (~40 staff, 35 workstations) transitioning from a legacy flat wired Windows network with standalone printers to a segmented Linux-based wireless architecture.
-
-To balance budget efficiency with departmental data protection, the architecture combines **5-VLAN segmentation (`/27` CIDR subnetting)**, **Router-on-a-Stick inter-VLAN routing**, **Cisco IOS Extended ACLs** to isolate high-security executive and financial zones, and **BYOD governance aligned with [NIST SP 800-114 Rev. 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-114r1.pdf)**.
-
-> **Scope Note:** Originally developed as the Network Architecture and Packet Tracer module of an academic team project, and independently extended with Cisco IOS Extended ACL enforcement and end-to-end connectivity/isolation verification.
-
----
+> **Scope Note:** This architecture was originally developed as the network design and Packet Tracer topology module of a university coursework project, and was independently extended with Cisco IOS Extended ACL policy enforcement and end-to-end connectivity/isolation verification.
 
 ### 2. Network Topology & Infrastructure
+The network follows a centralized **star topology** radiating from a physically secured Server Room housing the core `Cisco 2960-24TT` switch, main router, centralized file servers, and IDS server, connecting outward to 5 dedicated departmental Wireless Access Points.
 
-[images/network-topology.jpeg]
+<p align="center">
+  <img src="images/network-topology.jpeg" alt="TLSW Enterprise WLAN & 5-VLAN Network Topology" width="90%" />
+</p>
 
-The infrastructure follows a **star topology** radiating from a physically secured central **Server Room** to five color-coded departmental wireless zones:
+### 3. Technical Architecture
+| Design Pillar | Implementation Details |
+| :--- | :--- |
+| **Topology & Switching** | Star topology anchored by a central `Cisco 2960-24TT` core switch and single main router (Router-on-a-Stick) |
+| **Departmental VLANs (5)** | Logical isolation across **CEO**, **Financial**, **Admin**, **Accounting**, and **R&D** zones to limit broadcast domains |
+| **IP Addressing (`/27` CIDR)** | `/27` subnetting (30 usable hosts per subnet) balancing address efficiency with room for departmental growth |
+| **Access Control** | Cisco IOS Extended ACL rules restricting cross-department access to sensitive zones |
+| **Endpoint Modernization** | Migration to **Ubuntu 24.04 LTS** across workstations/servers to eliminate licensing overhead and reduce attack surface |
 
-- **Core Backbone (Cisco IOS):** 1x Cisco Catalyst `2960-24TT` core switch (`Switch0`) handling Layer 2 VLAN segmentation and 802.1Q trunking, connected to 1x Cisco `ISR4321` router (`Router0`) performing inter-VLAN routing and ACL filtering.
-- **Centralized Server Room:** 5x departmental file servers (`Ubuntu Server 24.04 LTS`) and 1x dedicated IDS server (`Kali Linux / Snort`).
-- **Departmental Wireless Zones (5 Zones):** Each department (CEO, Admin, Accounting, Financial, R&D) operates on a dedicated Wireless Access Point (`AccessPoint-PT`) serving `Ubuntu Desktop 24.04 LTS` workstations (35 total), CUPS-managed network printers (5 total), and registered BYOD smartphones.
+### 4. How to Run & Replicate
+1. Install **Cisco Packet Tracer v8.0+**.
+2. Download and open [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt).
+3. Inspect VLAN assignments (`show vlan brief`) on the core switch and sub-interfaces/ACLs (`show running-config`, `show access-lists`) on the main router.
+4. Run ICMP `ping` tests across departmental workstations to verify permitted vs. blocked inter-VLAN traffic.
+5. Refer to [`network-architecture-report.pdf`](network-architecture-report.pdf) for full IP tables, design rationale, and security analysis.
 
----
+### 5. Verification & Security Testing
+#### 5.1 Authorized Connectivity Test (CEO Zone)
+Verified end-to-end routing and authorized network reachability from the CEO VLAN to target enterprise resources:
 
-### 3. VLAN & `/27` CIDR IP Addressing Scheme
+<p align="center">
+  <img src="images/ceo-connectivity-test.jpeg" alt="CEO VLAN Connectivity Test" width="85%" />
+</p>
 
-Using a `/27` subnet mask (`255.255.255.224`, 30 usable host IPs per subnet) provides clean departmental isolation while leaving room for future headcount expansion.
+#### 5.2 ACL Isolation Test (R&D Zone)
+Verified that Cisco IOS Extended ACL policies successfully block unauthorized cross-VLAN traffic from the R&D zone to restricted segments:
 
-| VLAN ID | Department | Security Tier | Network Address | Default Gateway | File Server | Workstations (7 PCs) | Network Printer | Smartphones (8 Units) | Broadcast |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **VLAN 10** | **CEO** | High Security | `10.1.13.0/27` | `10.1.13.1` | `10.1.13.2` | `10.1.13.3 – .9` | `10.1.13.10` | `10.1.13.11 – .18` | `10.1.13.31` |
-| **VLAN 20** | **Admin** | Operational | `10.1.13.32/27` | `10.1.13.33` | `10.1.13.34` | `10.1.13.35 – .41` | `10.1.13.42` | `10.1.13.43 – .50` | `10.1.13.63` |
-| **VLAN 30** | **Accounting** | Operational | `10.1.13.64/27` | `10.1.13.65` | `10.1.13.66` | `10.1.13.67 – .73` | `10.1.13.74` | `10.1.13.75 – .82` | `10.1.13.95` |
-| **VLAN 40** | **Financial** | Restricted | `10.1.13.96/27` | `10.1.13.97` | `10.1.13.98` | `10.1.13.99 – .105` | `10.1.13.106` | `10.1.13.107 – .114` | `10.1.13.127` |
-| **VLAN 50** | **R&D** | Operational | `10.1.13.128/27` | `10.1.13.129` | `10.1.13.130` | `10.1.13.131 – .137` | `10.1.13.138` | `10.1.13.139 – .146` | `10.1.13.159` |
+<p align="center">
+  <img src="images/rd-acl-isolation-test.jpeg" alt="R&D VLAN ACL Isolation Test" width="85%" />
+</p>
 
----
+### 6. Security Governance
+- **BYOD Policy (NIST SP 800-114 Rev. 1)**: Enforces network segmentation, strong wireless encryption, endpoint compliance checks, and least-privilege access for staff mobile devices.
+- **Centralized Server Room**: Physical consolidation of file servers and IDS monitoring behind core switch/router ACL boundaries.
 
-### 4. Router-on-a-Stick & Inter-VLAN ACL Implementation
-
-To ensure a compromised endpoint in a general operational VLAN cannot pivot directly into executive or financial servers, an Extended Access Control List (`RESTRICT-TO-SENSITIVE-VLANS`) is enforced inbound on the `ISR4321` subinterfaces for **Admin (`Gig0/0/0.20`)**, **Accounting (`Gig0/0/0.30`)**, and **R&D (`Gig0/0/0.50`)**:
-
-```cisco
-ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
- permit tcp any 10.1.13.0 0.0.0.31 established
- permit tcp any 10.1.13.96 0.0.0.31 established
- permit icmp any 10.1.13.0 0.0.0.31 echo-reply
- permit icmp any 10.1.13.96 0.0.0.31 echo-reply
- deny ip any 10.1.13.0 0.0.0.31
- deny ip any 10.1.13.96 0.0.0.31
- permit ip any any
-```
-
-- **Policy Effect:** Operational zones (Admin, Accounting, R&D) are blocked from initiating connections to the **CEO (`10.1.13.0/27`)** and **Financial (`10.1.13.96/27`)** subnets, while return traffic (`established` TCP and ICMP `echo-reply`) for sessions initiated by CEO/Financial hosts remains permitted.
-- **Simulation & Full Report:** Open [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt) in Cisco Packet Tracer to inspect the live CLI configurations, or read [`network-architecture-report.pdf`](network-architecture-report.pdf) for the full design rationale.
-
----
-
-### 5. Verification & Connectivity Testing
-
-| Test Case | Source Host | Destination | Expected Outcome | Observed Result |
-| :--- | :--- | :--- | :--- | :--- |
-| **Intra-VLAN (Wireless → Wired)** | `CEO_PC1` (`10.1.13.3`) | `CEO_File_SRV` (`10.1.13.2`) | Reachable | **Passed** (4/4 replies, `TTL=128`) |
-| **Default Gateway Reachability** | `CEO_PC1` (`10.1.13.3`) | `Gig0/0/0.10` (`10.1.13.1`) | Reachable | **Passed** (4/4 replies, `TTL=255`) |
-| **Authorized Inter-VLAN Routing** | `CEO_PC1` (`10.1.13.3`) | `Fin_File_SRV` (`10.1.13.98`) | Reachable via `Router0` | **Passed** (`TTL=127`, routed across VLAN 10 → 40) |
-| **ACL Security Isolation** | `R&D_PC1` (`10.1.13.131`) | `CEO_File_SRV` (`10.1.13.2`) | Blocked at gateway | **Passed** (`10.1.13.129: Destination host unreachable`, 100% loss) |
-
-**1. Authorized Connectivity & Inter-VLAN Routing (`CEO_PC1`):**
-[images/ceo-connectivity-test.jpeg]
-
-**2. ACL Isolation Enforcement (`R&D_PC1` → `CEO_File_SRV` Blocked):**
-[images/rd-acl-isolation-test.jpeg]
-
----
-
-### 6. Security Standards & BYOD Policy
-
-The wireless and server architecture references three official NIST guidelines:
-- **[NIST SP 800-114 Rev. 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-114r1.pdf) (Telework & BYOD Security):** Enforces baseline hygiene for unmanaged personal smartphones, VLAN separation from sensitive servers, strong wireless encryption (**WPA3-Enterprise** recommended for production; WPA2-PSK used within Packet Tracer simulation limits), and selective **remote wipe** capabilities for lost devices.
-- **[NIST SP 800-153](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf):** Guidelines for securing enterprise Wireless Local Area Networks (WLANs).
-- **[NIST SP 800-123](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-123.pdf):** General server security hardening for centralized Ubuntu file servers and AppArmor enforcement.
-
----
-
-### 7. Architectural Trade-offs & Future Improvements
-
-| Known Limitation | Architectural Impact | Production Improvement Path |
-| :--- | :--- | :--- |
-| **Single Point of Failure** | All inter-VLAN routing relies on one `ISR4321` router and a single physical trunk cable to `Switch0`. | Deploy redundant routers with **HSRP/VRRP** and dual-homed **EtherChannel (LACP)** links. |
-| **Router-on-a-Stick Bottleneck** | High-volume transfers between workstations and centralized file servers share a single router trunk interface. | Replace the Layer 2 core switch with a **Layer 3 Switch** using hardware-accelerated **SVIs** for inter-VLAN routing. |
-| **Co-Channel Wireless Interference** | Five access points in a single office floor risk RF overlap and degraded throughput. | Enforce non-overlapping channel planning (channels `1 / 6 / 11` on 2.4 GHz or 5 GHz deployment) and tune transmit power. |
-
----
-
-### 8. Repository Structure
-
+### 7. Repository Structure
 ```text
 enterprise-wlan-vlan-architecture/
-├── README.md                              # Bilingual project documentation (EN / 中文)
-├── network-architecture-report.pdf        # Full network design report & NIST references
-├── enterprise-wlan-topology.pkt           # Cisco Packet Tracer simulation file (VLANs + ACL)
+├── README.md
+├── enterprise-wlan-topology.pkt          # Cisco Packet Tracer simulation file
+├── network-architecture-report.pdf       # Detailed architecture & security report
 └── images/
-    ├── network-topology.jpeg              # High-resolution topology diagram
-    ├── ceo-connectivity-test.jpeg         # Intra-VLAN & authorized inter-VLAN Ping verification
-    └── rd-acl-isolation-test.jpeg         # Extended ACL isolation verification (Unreachable)
+    ├── network-topology.jpeg             # Physical & logical 5-VLAN star topology
+    ├── ceo-connectivity-test.jpeg        # Authorized CEO VLAN connectivity verification
+    └── rd-acl-isolation-test.jpeg        # R&D VLAN Extended ACL isolation verification
 ```
 
 ---
@@ -127,107 +80,39 @@ enterprise-wlan-vlan-architecture/
 <a id="中文版本"></a>
 ## 中文版本
 
-### 1. 项目简介
+### 1. 项目概述
+本项目基于 **Cisco Packet Tracer** 为 **TLSW Corporation**（约 40 名员工、35 台工作站）重构了一套企业级分段无线网络架构，将老旧的扁平有线 Windows 网络迁移至基于 **Ubuntu 24.04 LTS** 的安全无线环境。方案涵盖 **5 个部门级 VLAN 隔离**、**`/27` CIDR 子网划分**、**Router-on-a-Stick（单臂路由）**、**Cisco IOS 扩展 ACL 策略**以及符合 **NIST SP 800-114 Rev. 1** 的 BYOD 安全治理。
 
-本项目为中型金融咨询公司 **TLSW Corporation**（约 40 名员工、35 台工作站）设计并仿真了一套安全、高性价比的企业级无线网络重构方案，帮助企业从传统的扁平有线 Windows 旧网络及单机打印机，平滑迁移至基于 Linux 生态的分段无线架构。
+> **范围说明：** 本项目最初作为课程团队作业中的网络架构与 Packet Tracer 拓扑模块完成，后续独立扩展实现了 Cisco IOS 扩展 ACL 访问控制策略及端到端连通性与隔离性验证。
 
-为兼顾成本控制与核心业务数据隔离，方案综合采用了 **5-VLAN 逻辑分段（`/27` CIDR 子网划分）**、**Router-on-a-Stick 单臂路由**、**Cisco IOS 扩展 ACL 访问控制**（保护高安全级的 CEO 与财务网段）以及基于 **[NIST SP 800-114 Rev. 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-114r1.pdf)** 的 BYOD 移动终端安全策略。
+### 2. 网络拓扑与基础设施
+网络采用以中心机房为核心的**星型拓扑**，集中部署 `Cisco 2960-24TT` 核心交换机、主路由器、部门文件服务器与 IDS 服务器，并向外连接至 5 个独立部门的无线接入点（AP）。
 
-> **项目范围说明：** 本仓库最初作为课程团队项目中的“网络架构设计与 Packet Tracer 仿真”核心模块完成，后续由本人独立补充了 Cisco IOS 扩展 ACL 隔离策略与端到端连通性/拦截测试验证。
+<p align="center">
+  <img src="images/network-topology.jpeg" alt="TLSW 企业无线网络与 5-VLAN 拓扑图" width="90%" />
+</p>
 
----
+### 3. 核心技术架构
+- **单臂路由与 VLAN 分段**：通过 1 台主路由器 + `Cisco 2960-24TT` 交换机划分 **CEO、Financial、Admin、Accounting、R&D** 5 个逻辑隔离区，缩小广播域并降低硬件成本。
+- **`/27` CIDR 子网规划**：每个部门子网提供 30 个可用主机地址，兼顾地址利用率与后续扩容空间。
+- **Cisco IOS 扩展 ACL 与 Linux 迁移**：在路由器接口落地扩展 ACL 实现部门间访问隔离，并规划迁移至 Ubuntu 24.04 LTS 以降低授权成本与攻击面。
 
-### 2. 网络拓扑与基础设施架构
+### 4. 连通性与 ACL 隔离验证
+- **CEO 部门授权连通性测试**：验证跨网段授权通信正常。
 
-[images/network-topology.jpeg]
+<p align="center">
+  <img src="images/ceo-connectivity-test.jpeg" alt="CEO 部门连通性测试截图" width="85%" />
+</p>
 
-整体采用以物理隔离的中央**核心机房（Server Room）**为中心的**星型拓扑**，向外辐射 5 个按色块区分的部门无线区域：
+- **R&D 部门 ACL 隔离测试**：验证扩展 ACL 成功拦截非授权跨 VLAN 访问。
 
-- **网络核心骨干（Cisco IOS）：** 1 台 Cisco Catalyst `2960-24TT` 核心交换机（`Switch0`）负责二层 VLAN 划分与 802.1Q Trunk 汇聚，上联 1 台 Cisco `ISR4321` 路由器（`Router0`）承担跨 VLAN 三层路由与 ACL 安全过滤。
-- **集中式机房：** 部署 5 台部门文件服务器（`Ubuntu Server 24.04 LTS`）与 1 台独立 IDS 入侵检测服务器（`Kali Linux / Snort`），便于统一物理安全管控。
-- **5 个部门无线区域：** CEO、Admin、Accounting、Financial 与 R&D 部门各配置 1 台独立无线接入点（`AccessPoint-PT`），接入 35 台 `Ubuntu Desktop 24.04 LTS` 工作站、5 台基于 CUPS 管理的网络打印机以及已注册的员工 BYOD 智能手机。
+<p align="center">
+  <img src="images/rd-acl-isolation-test.jpeg" alt="R&D 部门 ACL 隔离测试截图" width="85%" />
+</p>
 
----
+### 5. 复现步骤与仓库结构
+1. 使用 **Cisco Packet Tracer v8.0+** 打开 [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt)。
+2. 在核心交换机和主路由器 CLI 中执行 `show vlan brief`、`show running-config`、`show access-lists` 查看配置，并用终端 `ping` 验证隔离效果。
+3. 完整 IP 地址表与安全设计说明见 [`network-architecture-report.pdf`](network-architecture-report.pdf)。
 
-### 3. VLAN 与 `/27` CIDR 子网地址规划
-
-采用 `/27` 子网掩码（`255.255.255.224`，每个子网提供 30 个可用主机地址），既避免了 IP 浪费、隔离了广播域，也为各部门后续扩编预留了充足地址空间。
-
-| VLAN ID | 部门 | 安全等级 | 网络地址 | 默认网关 | 文件服务器 | 工作站（7 台） | 网络打印机 | 智能手机（8 台） | 广播地址 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **VLAN 10** | **CEO** | 高安全区 | `10.1.13.0/27` | `10.1.13.1` | `10.1.13.2` | `10.1.13.3 – .9` | `10.1.13.10` | `10.1.13.11 – .18` | `10.1.13.31` |
-| **VLAN 20** | **Admin** | 普通业务区 | `10.1.13.32/27` | `10.1.13.33` | `10.1.13.34` | `10.1.13.35 – .41` | `10.1.13.42` | `10.1.13.43 – .50` | `10.1.13.63` |
-| **VLAN 30** | **Accounting** | 普通业务区 | `10.1.13.64/27` | `10.1.13.65` | `10.1.13.66` | `10.1.13.67 – .73` | `10.1.13.74` | `10.1.13.75 – .82` | `10.1.13.95` |
-| **VLAN 40** | **Financial** | 受限核心区 | `10.1.13.96/27` | `10.1.13.97` | `10.1.13.98` | `10.1.13.99 – .105` | `10.1.13.106` | `10.1.13.107 – .114` | `10.1.13.127` |
-| **VLAN 50** | **R&D** | 普通业务区 | `10.1.13.128/27` | `10.1.13.129` | `10.1.13.130` | `10.1.13.131 – .137` | `10.1.13.138` | `10.1.13.139 – .146` | `10.1.13.159` |
-
----
-
-### 4. 单臂路由与跨 VLAN ACL 安全隔离
-
-为防止普通业务区（如 R&D、Accounting、Admin）中某台终端失陷后直接横向移动至 CEO 或财务服务器，在 `ISR4321` 的 **Admin（`Gig0/0/0.20`）**、**Accounting（`Gig0/0/0.30`）** 与 **R&D（`Gig0/0/0.50`）** 子接口入方向部署了扩展 ACL（`RESTRICT-TO-SENSITIVE-VLANS`）：
-
-```cisco
-ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
- permit tcp any 10.1.13.0 0.0.0.31 established
- permit tcp any 10.1.13.96 0.0.0.31 established
- permit icmp any 10.1.13.0 0.0.0.31 echo-reply
- permit icmp any 10.1.13.96 0.0.0.31 echo-reply
- deny ip any 10.1.13.0 0.0.0.31
- deny ip any 10.1.13.96 0.0.0.31
- permit ip any any
-```
-
-- **策略效果：** 禁止普通业务部门主动发起对 **CEO（`10.1.13.0/27`）** 和 **Financial（`10.1.13.96/27`）** 网段的访问，同时放行由 CEO / Financial 主动发起会话后的回包流量（`established` TCP 与 ICMP `echo-reply`）。
-- **仿真文件与完整报告：** 可在 Cisco Packet Tracer 中直接打开 [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt) 查看完整设备 CLI 配置，或在线阅读 [`network-architecture-report.pdf`](network-architecture-report.pdf)。
-
----
-
-### 5. 仿真连通性与安全隔离验证
-
-| 测试场景 | 源终端 | 目标地址 | 预期结果 | 实测结果 |
-| :--- | :--- | :--- | :--- | :--- |
-| **同网段（无线 → 有线）** | `CEO_PC1` (`10.1.13.3`) | `CEO_File_SRV` (`10.1.13.2`) | 连通 | **通过**（4/4 回复，`TTL=128`） |
-| **本网段默认网关** | `CEO_PC1` (`10.1.13.3`) | `Gig0/0/0.10` (`10.1.13.1`) | 连通 | **通过**（4/4 回复，`TTL=255`） |
-| **授权跨 VLAN 路由** | `CEO_PC1` (`10.1.13.3`) | `Fin_File_SRV` (`10.1.13.98`) | 经由 `Router0` 连通 | **通过**（`TTL=127`，VLAN 10 → 40 路由成功） |
-| **ACL 跨网段隔离** | `R&D_PC1` (`10.1.13.131`) | `CEO_File_SRV` (`10.1.13.2`) | 在网关被拦截 | **通过**（`10.1.13.129` 返回 `Destination host unreachable`，100% 拦截） |
-
-**1. 正常连通与授权跨 VLAN 路由验证（`CEO_PC1`）：**
-[images/ceo-connectivity-test.jpeg]
-
-**2. 扩展 ACL 隔离生效验证（`R&D_PC1` 访问 `CEO_File_SRV` 被拦截）：**
-[images/rd-acl-isolation-test.jpeg]
-
----
-
-### 6. 信息安全标准与 BYOD 合规策略
-
-无线网络与服务器加固方案依据以下三项 NIST 官方标准设计：
-- **[NIST SP 800-114 Rev. 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-114r1.pdf)（远程办公与 BYOD 安全指南）：** 明确非受管个人手机的安全基线（锁屏策略与系统更新）、基于 VLAN 的网络隔离、无线传输加密（生产环境采用 **WPA3-Enterprise**；Packet Tracer 仿真环境受限于设备模型采用 WPA2-PSK）以及设备遗失时的**企业数据远程擦除（Remote Wipe）**策略。
-- **[NIST SP 800-153](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf)：** 企业级无线局域网（WLAN）安全防护规范。
-- **[NIST SP 800-123](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-123.pdf)：** 集中式 Ubuntu 文件服务器通用安全加固及 AppArmor 访问控制参考。
-
----
-
-### 7. 架构权衡与生产环境演进方向
-
-| 当前架构局限 | 潜在影响 | 生产环境优化方案 |
-| :--- | :--- | :--- |
-| **单点故障（SPOF）** | 所有跨 VLAN 通信均依赖单台 `ISR4321` 路由器与单条 Trunk 物理链路。 | 部署双机热备路由（**HSRP / VRRP**）并配置双链路 **EtherChannel（LACP）** 冗余。 |
-| **单臂路由带宽瓶颈** | 大文件跨部门传输均需经过路由器的同一物理接口，易形成拥塞。 | 将核心交换机升级为**三层交换机**，利用硬件转发的 **SVI** 替代单臂路由。 |
-| **多 AP 无线信道干扰** | 单一办公区域部署 5 台 AP 容易产生同频信号重叠，影响无线稳定性。 | 规划互不重叠的信道（2.4 GHz 采用 `1 / 6 / 11` 或全面迁移至 5 GHz）并合理控制发射功率。 |
-
----
-
-### 8. 仓库目录结构
-
-```text
-enterprise-wlan-vlan-architecture/
-├── README.md                              # 中英双语项目主页
-├── network-architecture-report.pdf        # 完整网络架构设计报告与 NIST 参考文献
-├── enterprise-wlan-topology.pkt           # Cisco Packet Tracer 仿真文件（含 VLAN 与 ACL）
-└── images/
-    ├── network-topology.jpeg              # 高清网络拓扑图
-    ├── ceo-connectivity-test.jpeg         # 同网段及授权跨 VLAN 连通测试截图
-    └── rd-acl-isolation-test.jpeg         # 扩展 ACL 安全隔离拦截截图
-```
+[返回顶部 / Back to Top](#enterprise-wireless-network-redesign--vlan-segmentation-cisco-packet-tracer)
