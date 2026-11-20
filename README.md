@@ -29,7 +29,7 @@ To balance budget efficiency with departmental data protection, the architecture
 
 ### 2. Network Topology & Infrastructure
 
-[images/network-topology.jpg]
+[images/network-topology.jpeg]
 
 The infrastructure follows a **star topology** radiating from a physically secured central **Server Room** to five color-coded departmental wireless zones:
 
@@ -69,7 +69,7 @@ ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
 ```
 
 - **Policy Effect:** Operational zones (Admin, Accounting, R&D) are blocked from initiating connections to the **CEO (`10.1.13.0/27`)** and **Financial (`10.1.13.96/27`)** subnets, while return traffic (`established` TCP and ICMP `echo-reply`) for sessions initiated by CEO/Financial hosts remains permitted.
-- **Full Device Configurations:** See [`packet-tracer/configs/isr4321-router-config.txt`](packet-tracer/configs/isr4321-router-config.txt) and [`packet-tracer/configs/sw2960-core-config.txt`](packet-tracer/configs/sw2960-core-config.txt).
+- **Simulation & Full Report:** Open [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt) in Cisco Packet Tracer to inspect the live CLI configurations, or read [`network-architecture-report.pdf`](network-architecture-report.pdf) for the full design rationale.
 
 ---
 
@@ -83,10 +83,10 @@ ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
 | **ACL Security Isolation** | `R&D_PC1` (`10.1.13.131`) | `CEO_File_SRV` (`10.1.13.2`) | Blocked at gateway | **Passed** (`10.1.13.129: Destination host unreachable`, 100% loss) |
 
 **1. Authorized Connectivity & Inter-VLAN Routing (`CEO_PC1`):**
-[images/ceo-connectivity-test.png]
+[images/ceo-connectivity-test.jpeg]
 
 **2. ACL Isolation Enforcement (`R&D_PC1` → `CEO_File_SRV` Blocked):**
-[images/rd-acl-isolation-test.png]
+[images/rd-acl-isolation-test.jpeg]
 
 ---
 
@@ -113,18 +113,13 @@ The wireless and server architecture references three official NIST guidelines:
 
 ```text
 enterprise-wlan-vlan-architecture/
-├── README.md                                 # Bilingual project documentation (EN / 中文)
-├── docs/
-│   └── network-architecture-report.pdf       # Full network design report & NIST references
-├── packet-tracer/
-│   ├── enterprise-wlan-topology.pkt          # Cisco Packet Tracer simulation file
-│   └── configs/
-│       ├── isr4321-router-config.txt         # Exported ISR4321 running-config (Subinterfaces + ACL)
-│       └── sw2960-core-config.txt            # Exported Catalyst 2960 running-config (VLANs + Trunk)
+├── README.md                              # Bilingual project documentation (EN / 中文)
+├── network-architecture-report.pdf        # Full network design report & NIST references
+├── enterprise-wlan-topology.pkt           # Cisco Packet Tracer simulation file (VLANs + ACL)
 └── images/
-    ├── network-topology.jpg                  # High-resolution topology diagram
-    ├── ceo-connectivity-test.png             # Intra-VLAN & authorized inter-VLAN Ping verification
-    └── rd-acl-isolation-test.png             # Extended ACL isolation verification (Unreachable)
+    ├── network-topology.jpeg              # High-resolution topology diagram
+    ├── ceo-connectivity-test.jpeg         # Intra-VLAN & authorized inter-VLAN Ping verification
+    └── rd-acl-isolation-test.jpeg         # Extended ACL isolation verification (Unreachable)
 ```
 
 ---
@@ -144,7 +139,7 @@ enterprise-wlan-vlan-architecture/
 
 ### 2. 网络拓扑与基础设施架构
 
-[images/network-topology.jpg]
+[images/network-topology.jpeg]
 
 整体采用以物理隔离的中央**核心机房（Server Room）**为中心的**星型拓扑**，向外辐射 5 个按色块区分的部门无线区域：
 
@@ -184,7 +179,7 @@ ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
 ```
 
 - **策略效果：** 禁止普通业务部门主动发起对 **CEO（`10.1.13.0/27`）** 和 **Financial（`10.1.13.96/27`）** 网段的访问，同时放行由 CEO / Financial 主动发起会话后的回包流量（`established` TCP 与 ICMP `echo-reply`）。
-- **完整设备配置：** 详见 [`packet-tracer/configs/isr4321-router-config.txt`](packet-tracer/configs/isr4321-router-config.txt) 与 [`packet-tracer/configs/sw2960-core-config.txt`](packet-tracer/configs/sw2960-core-config.txt)。
+- **仿真文件与完整报告：** 可在 Cisco Packet Tracer 中直接打开 [`enterprise-wlan-topology.pkt`](enterprise-wlan-topology.pkt) 查看完整设备 CLI 配置，或在线阅读 [`network-architecture-report.pdf`](network-architecture-report.pdf)。
 
 ---
 
@@ -198,10 +193,10 @@ ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
 | **ACL 跨网段隔离** | `R&D_PC1` (`10.1.13.131`) | `CEO_File_SRV` (`10.1.13.2`) | 在网关被拦截 | **通过**（`10.1.13.129` 返回 `Destination host unreachable`，100% 拦截） |
 
 **1. 正常连通与授权跨 VLAN 路由验证（`CEO_PC1`）：**
-[images/ceo-connectivity-test.png]
+[images/ceo-connectivity-test.jpeg]
 
 **2. 扩展 ACL 隔离生效验证（`R&D_PC1` 访问 `CEO_File_SRV` 被拦截）：**
-[images/rd-acl-isolation-test.png]
+[images/rd-acl-isolation-test.jpeg]
 
 ---
 
@@ -228,16 +223,11 @@ ip access-list extended RESTRICT-TO-SENSITIVE-VLANS
 
 ```text
 enterprise-wlan-vlan-architecture/
-├── README.md                                 # 中英双语项目主页
-├── docs/
-│   └── network-architecture-report.pdf       # 完整网络架构设计报告与 NIST 参考文献
-├── packet-tracer/
-│   ├── enterprise-wlan-topology.pkt          # Cisco Packet Tracer 仿真文件
-│   └── configs/
-│       ├── isr4321-router-config.txt         # ISR4321 路由器配置（子接口 + 扩展 ACL）
-│       └── sw2960-core-config.txt            # Catalyst 2960 核心交换机配置（VLAN + Trunk）
+├── README.md                              # 中英双语项目主页
+├── network-architecture-report.pdf        # 完整网络架构设计报告与 NIST 参考文献
+├── enterprise-wlan-topology.pkt           # Cisco Packet Tracer 仿真文件（含 VLAN 与 ACL）
 └── images/
-    ├── network-topology.jpg                  # 高清网络拓扑图
-    ├── ceo-connectivity-test.png             # 同网段及授权跨 VLAN 连通测试截图
-    └── rd-acl-isolation-test.png             # 扩展 ACL 安全隔离拦截截图
+    ├── network-topology.jpeg              # 高清网络拓扑图
+    ├── ceo-connectivity-test.jpeg         # 同网段及授权跨 VLAN 连通测试截图
+    └── rd-acl-isolation-test.jpeg         # 扩展 ACL 安全隔离拦截截图
 ```
